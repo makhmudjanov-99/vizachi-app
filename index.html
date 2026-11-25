@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vizachi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  /* Окно Vizachi в Telegram. Цвета — из темы Telegram, акцент — зелёный Vizachi. */
+  :root {
+    --bg: var(--tg-theme-secondary-bg-color, #f2f4f6);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --text: var(--tg-theme-text-color, #15181e);
+    --muted: var(--tg-theme-hint-color, #7b8390);
+    --line: color-mix(in srgb, var(--muted) 22%, transparent);
+    --accent: #16a34a;
+    --accent2: #0f766e;
+    --grad: linear-gradient(135deg, #2fd36f, #0f766e);
+    --soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --warn: #e08a1e;
+    --bad: #e0533d;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.4 -apple-system, "Segoe UI", Roboto, system-ui, sans-serif; }
+  body { padding: 12px 14px calc(24px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+  .top { display: flex; align-items: center; gap: 10px; margin: 2px 2px 14px; }
+  .logo { width: 36px; height: 36px; border-radius: 11px; background: var(--grad); display: grid; place-items: center; color: #fff; }
+  .logo svg { width: 31px; height: 31px; }
+  .top b { font-size: 17px; }
+  .top small { display: block; color: var(--muted); font-size: 12px; margin-top: -1px; }
+  .langs { margin-left: auto; display: flex; background: var(--card); border-radius: 999px; padding: 3px; }
+  .langs button { padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .langs button.on { background: var(--soft); color: var(--accent); }
+  .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .hero { display: flex; gap: 16px; align-items: center; position: relative; overflow: hidden; }
+  .hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, var(--soft), transparent 70%); pointer-events: none; }
+  .ring { width: 92px; height: 92px; flex: none; position: relative; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .n { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+  .ring .n b { font-size: 26px; display: block; }
+  .ring .n span { font-size: 11px; color: var(--muted); }
+  .hero h2 { margin: 0 0 4px; font-size: 18px; }
+  .hero p { margin: 0; color: var(--muted); font-size: 13px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+    background: var(--soft); color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; }
+  .pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+  .pill.bad { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+  .keychip { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; padding: 6px 10px; border-radius: 10px;
+    background: var(--bg); font: 600 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .4px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; border-radius: 14px;
+    background: var(--grad); color: #fff; font-weight: 700; }
+  .btn.ghost { background: var(--soft); color: var(--accent); }
+  .btn:active, .tile:active, .krow:active { transform: scale(.98); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  h3 { margin: 4px 4px 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: var(--bg); border-radius: 14px; padding: 10px; text-align: center; }
+  .stat b { display: block; font-size: 22px; }
+  .stat span { font-size: 11px; color: var(--muted); }
+  .stat small { display: block; font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .chart { display: flex; align-items: flex-end; gap: 4px; height: 70px; margin-top: 14px; }
+  .chart i { flex: 1; border-radius: 5px 5px 2px 2px; background: var(--soft); position: relative; min-height: 3px; }
+  .chart i.today { background: var(--accent); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile { background: var(--card); border-radius: 16px; padding: 14px 6px 12px; text-align: center; font-size: 12.5px; font-weight: 600; }
+  .tile .ic { width: 42px; height: 42px; border-radius: 13px; margin: 0 auto 8px; display: grid; place-items: center; font-size: 21px; background: var(--soft); }
+  .steps { margin: 6px 0 14px; padding: 0; list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: 14px; }
+  .steps li::before { content: counter(s); flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--soft); color: var(--accent);
+    display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+  .ref { display: flex; gap: 12px; align-items: center; }
+  .ref .ic { font-size: 28px; }
+  .ref p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--text); color: var(--card);
+    padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; opacity: 0; transition: .25s; pointer-events: none; white-space: nowrap; }
+  .toast.on { opacity: .95; }
+  .sk { background: linear-gradient(90deg, var(--card), var(--bg), var(--card)); background-size: 200% 100%; animation: sk 1.2s infinite; border-radius: var(--radius); }
+  @keyframes sk { to { background-position: -200% 0; } }
+  /* продавец */
+  .seg { display: flex; background: var(--card); border-radius: 14px; padding: 4px; margin-bottom: 12px; }
+  .seg button { flex: 1; padding: 9px; border-radius: 11px; font-weight: 600; color: var(--muted); }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi { background: var(--card); border-radius: 16px; padding: 12px; }
+  .kpi b { font-size: 20px; display: block; }
+  .kpi span { font-size: 11.5px; color: var(--muted); }
+  .search { width: 100%; padding: 12px 14px; border-radius: 14px; border: 0; background: var(--card); color: var(--text); font: inherit; margin-bottom: 8px; outline: none; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; scrollbar-width: none; }
+  .chips button { padding: 6px 12px; border-radius: 999px; background: var(--card); font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--muted); }
+  .chips button.on { background: var(--soft); color: var(--accent); }
+  .krow { display: flex; gap: 12px; align-items: center; background: var(--card); border-radius: 16px; padding: 12px 14px; margin-bottom: 8px; width: 100%; text-align: left; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--accent); }
+  .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: var(--muted); }
+  .krow .m { flex: 1; min-width: 0; }
+  .krow .m b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .krow .m small { color: var(--muted); font-size: 12px; }
+  .krow .d { text-align: right; font-size: 12px; color: var(--muted); }
+  .krow .d b { display: block; font-size: 16px; color: var(--text); }
+  .sheet { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: flex-end; z-index: 5; }
+  .sheet[hidden] { display: none; }
+  [hidden] { display: none !important; }
+  .sheet .in { background: var(--card); width: 100%; max-width: 560px; margin: 0 auto; border-radius: 22px 22px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); max-height: 88vh; overflow: auto; }
+  .sheet h4 { margin: 0 0 4px; font-size: 18px; }
+  .sheet .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  label.f { display: block; font-size: 12px; color: var(--muted); margin: 10px 2px 5px; }
+  input.i, select.i { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; outline: none; }
+  .opts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opts button { padding: 9px 13px; border-radius: 11px; background: var(--bg); font-weight: 600; font-size: 14px; }
+  .opts button.on { background: var(--accent); color: #fff; }
+  .made { text-align: center; padding: 6px 0 4px; }
+  .made code { display: block; font: 700 19px/1.3 ui-monospace, Consolas, monospace; margin: 10px 0 14px; padding: 12px; border-radius: 12px; background: var(--soft); color: var(--accent); }
+  .pays div { display: flex; justify-content: space-between; padding: 9px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .pays div:last-child { border: 0; }
+  .pays small { color: var(--muted); }
+  .plan { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; background: var(--bg); border: 2px solid transparent;
+    border-radius: 16px; padding: 12px 14px; margin-bottom: 8px; }
+  .plan.feat { border-color: var(--accent); }
+  .plan .m { flex: 1; min-width: 0; }
+  .plan .m b { display: block; font-size: 15px; }
+  .plan .m small { color: var(--muted); font-size: 12px; }
+  .plan .p { text-align: right; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .plan .p small { display: block; font-weight: 600; font-size: 11px; color: var(--accent); }
+  .plan .tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 10.5px; vertical-align: 2px; }
+  .sheet h5 { margin: 14px 2px 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  /* экран тарифов */
+  .thero { position: relative; overflow: hidden; border-radius: 22px; padding: 20px 18px 18px; margin-bottom: 14px; color: #fff; background: var(--grad); }
+  .thero h2 { margin: 0 0 6px; font-size: 23px; letter-spacing: -.3px; }
+  .thero p { margin: 0; font-size: 13.5px; opacity: .93; max-width: 72%; }
+  .thero svg { position: absolute; right: -24px; bottom: -34px; width: 138px; height: 138px; color: #fff; opacity: .2; }
+  .tseg { display: flex; background: var(--card); border-radius: 14px; padding: 4px; margin-bottom: 12px; }
+  .tseg button { flex: 1; padding: 10px; border-radius: 11px; font-weight: 700; color: var(--muted); }
+  .tseg button.on { background: var(--soft); color: var(--accent); }
+  .tc { display: block; width: 100%; text-align: left; background: var(--card); border: 2px solid transparent; border-radius: 20px;
+    padding: 15px 16px; margin-bottom: 10px; transition: border-color .15s, box-shadow .15s; }
+  .tc.on { border-color: var(--accent); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 20%, transparent); }
+  .tc .hd { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .tc .hd b { font-size: 16px; }
+  .tc .rad { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+  .tc.on .rad { border-color: var(--accent); background: var(--accent); }
+  .tc.on .rad::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+  .badge { font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--accent2); color: #fff; letter-spacing: .2px; }
+  .badge.gold { background: linear-gradient(135deg, #f2a93b, #d9771a); }
+  .badge.soft { background: var(--soft); color: var(--accent); }
+  .tc .pr { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .tc .pr strong { font-size: 28px; letter-spacing: -.6px; line-height: 1.15; }
+  .tc .pr span { color: var(--muted); font-size: 13px; font-weight: 600; }
+  .tc .pm { font-size: 12.5px; color: var(--accent); font-weight: 700; margin-top: 1px; }
+  .tc ul { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: grid; gap: 5px; }
+  .tc li { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .tc li::before { content: "✓"; color: var(--accent); font-weight: 800; }
+  .tnote { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; background: var(--card); border-radius: 16px; padding: 13px 14px; font-size: 13.5px; font-weight: 600; }
+  .tnote span { flex: 1; }
+  .tnote i { font-style: normal; color: var(--muted); }
+  .cta { position: fixed; left: 0; right: 0; bottom: 0; padding: 14px 14px calc(12px + env(safe-area-inset-bottom)); z-index: 4;
+    background: linear-gradient(transparent, var(--bg) 35%); }
+  .cta .btn { max-width: 532px; margin: 0 auto; padding: 15px; font-size: 16px; box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .cta .btn[disabled] { opacity: .6; }
+  .done { text-align: center; padding: 30px 8px 6px; }
+  .done .ok { width: 96px; height: 96px; margin: 0 auto 18px; border-radius: 50%; background: var(--grad); display: grid; place-items: center;
+    animation: pop .5s cubic-bezier(.2, 1.4, .4, 1); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .done h2 { margin: 0 0 8px; font-size: 22px; }
+  .done p { margin: 0 auto 18px; color: var(--muted); font-size: 14px; max-width: 320px; }
+  .sum { display: flex; justify-content: space-between; align-items: center; }
+  .sum span { color: var(--muted); font-size: 13px; }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+  .fab { position: fixed; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 18px; background: var(--accent);
+    color: #fff; font-size: 28px; box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 45%, transparent); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <path id="aT" d="M30,100 A70,70 0 0,1 170,100"/><path id="aB" d="M15,100 A85,85 0 0,0 185,100"/>
+  <symbol id="S" viewBox="0 0 200 200"><g transform="rotate(-10 100 100)" fill="none" stroke="currentColor">
+    <circle cx="100" cy="100" r="92" stroke-width="7"/><circle cx="100" cy="100" r="64" stroke-width="2.6"/>
+    <circle cx="100" cy="100" r="55" stroke-width="2.4" stroke-dasharray="1 6.2" stroke-linecap="round"/>
+    <g stroke="none" fill="currentColor" font-family="Bahnschrift,Segoe UI,sans-serif" font-weight="700" text-anchor="middle">
+      <text font-size="17.5" letter-spacing="5"><textPath href="#aT" startOffset="50%">VIZACHI</textPath></text>
+      <text font-size="14.5" letter-spacing="3.2"><textPath href="#aB" startOffset="50%">TEZ VA OSON</textPath></text>
+      <circle cx="21" cy="100" r="3.6"/><circle cx="179" cy="100" r="3.6"/></g>
+    <path d="M74 101 L93 121 L129 79" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/></g></symbol>
+</defs></svg>
+<div class="top">
+  <div class="logo"><svg viewBox="0 0 200 200"><use href="#S"/></svg></div>
+  <div><b>Vizachi</b><small id="sub"></small></div>
+  <div class="langs" id="langs"><button data-l="uz">UZ</button><button data-l="ru">RU</button><button data-l="en">EN</button></div>
+</div>
+<div class="seg" id="seg" hidden><button data-v="me" class="on" id="segMe"></button><button data-v="admin">Продавец</button></div>
+<main id="app"><div class="sk" style="height:124px;margin-bottom:12px"></div><div class="sk" style="height:180px"></div></main>
+<div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+// Адрес веб-приложения Apps Script (тот же, что в расширении).
+const API = "https://script.google.com/macros/s/AKfycbwlUFlpPcbyWUpWqg4Eq65nF27rKDYRRdsyUTp-8C5VemCNVPlhzs4xj_MWHs8G7GSWjA/exec";
+const TG = window.Telegram?.WebApp;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const L = {
+  uz: { sub: "viza agenti yordamchisi", me: "Kabinet", hi: "Assalomu alaykum", days: "kun", left: "qoldi", until: "{0} gacha",
+        paid: "Obuna", trial: "Sinov muddati", ended: "Tugagan", blocked: "Bloklangan", last: "Oxirgi kun",
+        renew: "Uzaytirish", buy: "Tariflar", copy: "Nusxa olindi", stats: "Statistika", today: "Bugun", month: "Oy", total: "Jami",
+        apps: "anketa", visas: "viza", act: "Bo'limlar", how: "Qanday ishlaydi", install: "O'rnatish", update: "Yangilash",
+        invite: "Taklif qilish", channel: "Kanal", admin: "Admin", sent: "Video chatga yuborildi 👇",
+        nokey: "Hali kirilmagan", nokeyText: "Vizachi'ni Chrome'ga o'rnating va panelidagi Telegram tugmasini bosing, obunangiz shu yerda ko'rinadi.",
+        s1: "Chrome'ga Vizachi'ni o'rnating", s2: "Vizachi panelidagi Telegram tugmasini bosing", s3: "Obunangiz shu yerda ko'rinadi",
+        refT: "Hamkasbni taklif qiling", refP: "Tarif sotib olgan har bir hamkasb uchun +{0} kun. Taklif qilganlar: {1}",
+        share: "Vizachi Visit Saudi anketalarini o'zi to'ldiradi. 3 kun bepul:", pcs: "kompyuter", err: "Ulanib bo'lmadi, qayta oching",
+        open: "Bu oyna Telegram'da ochiladi: @{0} → «Vizachi»",
+        tarT: "Tariflar", packs: "Anketa paketlari", packsP: "Kuymaydi. Obuna bo'lmaganda ishlatiladi", subs: "Obuna", subsP: "Anketa cheksiz",
+        anketa: "anketa", per: "1 anketa {0}", sum: "so'm", best: "Tavsiya", seat: "Qo'shimcha kompyuter: oyiga +{0} so'm",
+        ordered: "Ariza yuborildi ✓ Sotuvchi bog'lanadi", pack: "Paket", piecesLeft: "anketa qoldi", pcsN: "📄 {0} anketa",
+        tn: { p50: "Start", p100: "Standart", p300: "Katta", m1: "Oylik", m3: "Mavsum", m12: "Yillik" },
+        tm: { m1: "1 oy", m3: "3 oy", m12: "12 oy" },
+        tarP: "Visit Saudi anketalarini Vizachi o'zi to'ldiradi. Sizga mos tarifni tanlang.",
+        forN: "{0} anketa",
+        perMonth: "oyiga {0} so'm",
+        b_pop: "Ommabop",
+        b_gift: "2 oy sovg'a",
+        b_best: "Tavsiya",
+        b_cheap: "Eng arzon",
+        fSub1: "Anketalar cheksiz",
+        fSub2: "1 kompyuter, yana biri oyiga +{0} so'm",
+        fPack1: "Muddati yo'q, kuymaydi",
+        fPack2: "Obuna bo'lmaganda ishlatiladi",
+        howPay: "Qanday to'lanadi",
+        pay1: "Tarifni tanlang va «Tanlash»ni bosing",
+        pay2: "Sotuvchi Telegram'da siz bilan bog'lanadi",
+        pay3: "To'lovdan keyin Vizachi o'zi yangilanadi",
+        askQ: "Savol bormi? Sotuvchiga yozing",
+        choose: "Tanlash",
+        doneT: "Ariza yuborildi",
+        doneP: "Sotuvchi tez orada Telegram'da yozadi. Ariza nusxasi chatda.",
+        toChat: "Chatga qaytish",
+        tarifL: "Tarif",
+        sumL: "Summa" },
+  ru: { sub: "помощник визового агента", me: "Кабинет", hi: "Ассалому алейкум", days: "дн.", left: "осталось", until: "до {0}",
+        paid: "Подписка", trial: "Пробный период", ended: "Закончилась", blocked: "Заблокирован", last: "Последний день",
+        renew: "Продлить", buy: "Тарифы", copy: "Скопировано", stats: "Статистика", today: "Сегодня", month: "Месяц", total: "Всего",
+        apps: "анкет", visas: "виз", act: "Разделы", how: "Как работает", install: "Установка", update: "Обновление",
+        invite: "Пригласить", channel: "Канал", admin: "Админ", sent: "Видео отправлено в чат 👇",
+        nokey: "Вы ещё не входили", nokeyText: "Установите Vizachi в Chrome и нажмите в его панели кнопку Telegram, подписка появится здесь.",
+        s1: "Установите Vizachi в Chrome", s2: "В панели Vizachi нажмите кнопку Telegram", s3: "Подписка появится здесь",
+        refT: "Пригласите коллегу", refP: "+{0} дней за каждого коллегу, оплатившего тариф. Приглашено: {1}",
+        share: "Vizachi сам заполняет анкеты Visit Saudi. 3 дня бесплатно:", pcs: "комп.", err: "Нет связи, откройте ещё раз",
+        open: "Это окно открывается в Telegram: @{0} → «Vizachi»",
+        tarT: "Тарифы", packs: "Пакеты анкет", packsP: "Не сгорают. Работают, когда нет подписки", subs: "Подписка", subsP: "Анкеты без ограничений",
+        anketa: "анкет", per: "1 анкета {0}", sum: "сум", best: "Советуем", seat: "Ещё один компьютер: +{0} сум в месяц",
+        ordered: "Заявка отправлена ✓ Продавец свяжется", pack: "Пакет", piecesLeft: "анкет осталось", pcsN: "📄 {0} анкет",
+        tn: { p50: "Старт", p100: "Стандарт", p300: "Большой", m1: "Месяц", m3: "Сезон", m12: "Год" },
+        tm: { m1: "1 месяц", m3: "3 месяца", m12: "12 месяцев" },
+        tarP: "Vizachi сам заполняет анкеты Visit Saudi. Выберите подходящий тариф.",
+        forN: "{0} анкет",
+        perMonth: "{0} сум в месяц",
+        b_pop: "Популярный",
+        b_gift: "2 мес. в подарок",
+        b_best: "Советуем",
+        b_cheap: "Выгоднее всего",
+        fSub1: "Анкеты без ограничений",
+        fSub2: "1 компьютер, ещё один +{0} сум в месяц",
+        fPack1: "Без срока, не сгорают",
+        fPack2: "Работают, когда нет подписки",
+        howPay: "Как оплатить",
+        pay1: "Выберите тариф и нажмите «Выбрать»",
+        pay2: "Продавец свяжется с вами в Telegram",
+        pay3: "После оплаты Vizachi обновится сам",
+        askQ: "Есть вопрос? Напишите продавцу",
+        choose: "Выбрать",
+        doneT: "Заявка отправлена",
+        doneP: "Продавец скоро напишет в Telegram. Копия заявки в чате.",
+        toChat: "Вернуться в чат",
+        tarifL: "Тариф",
+        sumL: "Сумма" },
+  en: { sub: "visa agent's assistant", me: "Account", hi: "Hello", days: "days", left: "left", until: "until {0}",
+        paid: "Subscription", trial: "Trial", ended: "Ended", blocked: "Blocked", last: "Last day",
+        renew: "Renew", buy: "Plans", copy: "Copied", stats: "Statistics", today: "Today", month: "Month", total: "Total",
+        apps: "apps", visas: "visas", act: "Sections", how: "How it works", install: "Install", update: "Update",
+        invite: "Invite", channel: "Channel", admin: "Admin", sent: "Video sent to the chat 👇",
+        nokey: "Not signed in yet", nokeyText: "Install Vizachi in Chrome and tap the Telegram button in its panel, your subscription will show here.",
+        s1: "Install Vizachi in Chrome", s2: "In the Vizachi panel tap the Telegram button", s3: "Your subscription shows up here",
+        refT: "Invite a colleague", refP: "+{0} days for every colleague who pays for a plan. Invited: {1}",
+        share: "Vizachi fills Visit Saudi applications by itself. 3 days free:", pcs: "PCs", err: "No connection, open again",
+        open: "This window opens in Telegram: @{0} → «Vizachi»",
+        tarT: "Plans", packs: "Application packs", packsP: "Never expire. Used when there is no subscription", subs: "Subscription", subsP: "Unlimited applications",
+        anketa: "apps", per: "{0} per app", sum: "UZS", best: "Best value", seat: "Extra computer: +{0} UZS per month",
+        ordered: "Request sent ✓ The seller will contact you", pack: "Pack", piecesLeft: "apps left", pcsN: "📄 {0} apps",
+        tn: { p50: "Start", p100: "Standard", p300: "Large", m1: "Monthly", m3: "Season", m12: "Annual" },
+        tm: { m1: "1 month", m3: "3 months", m12: "12 months" },
+        tarP: "Vizachi fills Visit Saudi applications by itself. Pick the plan that fits you.",
+        forN: "{0} apps",
+        perMonth: "{0} UZS per month",
+        b_pop: "Popular",
+        b_gift: "2 months free",
+        b_best: "Best value",
+        b_cheap: "Lowest price",
+        fSub1: "Unlimited applications",
+        fSub2: "1 computer, each extra +{0} UZS per month",
+        fPack1: "No expiry",
+        fPack2: "Used when there is no subscription",
+        howPay: "How to pay",
+        pay1: "Pick a plan and tap «Choose»",
+        pay2: "The seller contacts you in Telegram",
+        pay3: "After payment Vizachi updates by itself",
+        askQ: "Questions? Message the seller",
+        choose: "Choose",
+        doneT: "Request sent",
+        doneP: "The seller will message you in Telegram soon. A copy is in the chat.",
+        toChat: "Back to chat",
+        tarifL: "Plan",
+        sumL: "Amount" },
+};
+let lang = "uz", me = null, adm = null, view = "me", filter = "all", q = "";
+const T = (k, ...a) => a.reduce((s, x, i) => s.split("{" + i + "}").join(x), (L[lang] || L.uz)[k] || k);
+const haptic = (t = "light") => { try { TG?.HapticFeedback?.impactOccurred(t); } catch {} };
+function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2200); }
+const openLink = (u) => (/^https:\/\/t\.me\//.test(u) && TG?.openTelegramLink ? TG.openTelegramLink(u) : TG?.openLink ? TG.openLink(u) : window.open(u, "_blank"));
+const copy = (s) => { navigator.clipboard?.writeText(s).then(() => toast(T("copy")), () => {}); haptic(); };
+
+async function api(op, extra = {}) {
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "app", op, initData: TG?.initData || "", ...extra }) });
+  return r.json();
+}
+
+// ---------- кабинет агента ----------
+function ring(days, total, color) {
+  const r = 40, c = 2 * Math.PI * r, part = Math.max(0, Math.min(1, total ? days / total : 0));
+  return `<svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="${r}" fill="none" stroke="var(--line)" stroke-width="8"/>` +
+    `<circle cx="46" cy="46" r="${r}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - part)}"/></svg>`;
+}
+function renderMe() {
+  const k = me.key, el = $("#app");
+  let hero;
+  if (!k) {
+    hero = `<div class="card"><div class="pill warn">${T("nokey")}</div><h2 style="margin:4px 0 6px">${T("hi")}${me.name ? ", " + esc(me.name) : ""} 👋</h2>
+      <ol class="steps"><li>${T("s1")}</li><li>${T("s2")}</li><li>${T("s3")}</li></ol>
+      <div class="row2"><button class="btn" data-go="store">🧩 ${T("install")}</button><button class="btn ghost" data-go="tariffs">💳 ${T("tarT")}</button></div></div>`;
+  } else {
+    const d = k.days ?? 0, forever = d > 3650, left = k.left || 0, byPack = k.ended && left > 0 && !k.blocked;
+    const state = k.blocked ? ["bad", T("blocked")] : byPack ? [left <= 10 ? "warn" : "", T("pack")] : k.ended ? ["bad", T("ended")] :
+      d <= 3 ? ["warn", k.trial ? T("trial") : T("paid")] : ["", k.trial ? T("trial") : T("paid")];
+    const color = k.blocked || (k.ended && !byPack) ? "var(--bad)" : (byPack ? left <= 10 : d <= 3) ? "var(--warn)" : "var(--accent)";
+    const num = k.blocked ? "0" : byPack ? String(left) : k.ended ? "0" : forever ? "∞" : String(d);
+    const arc = byPack ? ring(left, Math.max(left, 100), color) : ring(k.ended ? 0 : forever ? 1 : d, forever ? 1 : k.trial ? 3 : 30, color);
+    const label = byPack ? T("piecesLeft") : d === 0 && !k.ended ? T("last") : T("days") + " " + T("left");
+    const info = (byPack ? "" : (forever ? "∞" : T("until", k.until)) + " · ") + (left && !byPack ? T("pcsN", left) + " · " : "") + `💻 ${k.pcs}/${k.seats} ${T("pcs")}`;
+    hero = `<div class="card hero"><div class="ring">${arc}
+        <div class="n"><div><b>${num}</b><span>${label}</span></div></div></div>
+      <div style="min-width:0"><div class="pill ${state[0]}">${state[1]}</div><h2>${T("hi")}${me.name ? ", " + esc(me.name) : ""}</h2>
+        <p>${info}</p>
+      </div></div>
+      <button class="btn" data-go="tariffs" style="margin:-2px 0 12px">💳 ${k.trial || k.ended ? T("buy") : T("renew")}</button>`;
+  }
+  let stats = "";
+  if (k && me.stats) {
+    const s = me.stats, days = [];
+    for (let i = 13; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5); days.push(d.toISOString().slice(0, 10)); }
+    const vals = days.map((d) => (s.days[d] || [0, 0])[0]), max = Math.max(1, ...vals);
+    stats = `<h3>${T("stats")}</h3><div class="card"><div class="stats">` +
+      [["today", s.today], ["month", s.month], ["total", s.total]].map(([n, v]) => `<div class="stat"><span>${T(n)}</span><b>${v[0]}</b><span>${T("apps")}</span><small>✅ ${v[1]} ${T("visas")}</small></div>`).join("") +
+      `</div><div class="chart">${vals.map((v, i) => `<i class="${i === 13 ? "today" : ""}" style="height:${Math.max(4, v / max * 100)}%" title="${v}"></i>`).join("")}</div></div>`;
+  }
+  const tiles = [["🎬", "how", "v:promo"], ["🧩", "install", "v:install"], ["🔄", "update", "v:update"],
+                 ["👥", "invite", "ref"], ["📢", "channel", "channel"], ["💬", "admin", "contact"]];
+  const refCard = me.ref ? `<div class="card ref"><div class="ic">🎁</div><div style="flex:1"><b>${T("refT")}</b><p>${T("refP", me.refDays, me.invited || 0)}</p></div>
+      <button class="btn" style="width:auto;padding:10px 14px" data-go="ref">📤</button></div>` : "";
+  el.innerHTML = hero + stats + `<h3>${T("act")}</h3><div class="tiles">` +
+    tiles.map(([ic, n, go]) => `<button class="tile" data-go="${go}"><div class="ic">${ic}</div>${T(n)}</button>`).join("") + `</div>` +
+    `<div style="height:12px"></div>` + refCard + `<div class="foot">@${esc(me.bot)}</div>`;
+}
+
+// ---------- тарифы ----------
+// Цены приходят с сервера (me.tariffs); здесь запасной список для демо-режима.
+const TARIFFS0 = [{ id: "p50", n: 50, sum: 49000 }, { id: "p100", n: 100, sum: 89000 }, { id: "p300", n: 300, sum: 239000 },
+  { id: "m1", months: 1, sum: 249000 }, { id: "m3", months: 3, sum: 669000 }, { id: "m12", months: 12, sum: 2490000 }];
+// Значки на карточках: популярный, скидка, подарок, советуем, дешевле всего.
+const BADGE = { m1: ["b_pop", ""], m3: ["save", "soft"], m12: ["b_gift", "gold"], p100: ["b_best", ""], p300: ["b_cheap", "soft"] };
+let tkind = "sub", done = null;
+const tsel = { sub: "m1", pack: "p100" };
+function renderTariffs() {
+  const all = me?.tariffs?.length ? me.tariffs : TARIFFS0, tl = L[lang] || L.uz, cur = T("sum");
+  const packs = all.filter((x) => x.n), subs = all.filter((x) => x.months), m1 = subs.find((x) => x.months === 1);
+  if (!packs.length) tkind = "sub";
+  const list = tkind === "pack" ? packs : subs;
+  if (!list.some((x) => x.id === tsel[tkind])) tsel[tkind] = list[0]?.id;
+  const card = (x) => {
+    const b = BADGE[x.id], save = x.months > 1 && m1 ? Math.round((1 - x.sum / (m1.sum * x.months)) * 100) : 0;
+    const badge = !b ? "" : b[0] === "save" ? (save > 0 ? `<span class="badge soft">−${save}%</span>` : "") : `<span class="badge ${b[1]}">${T(b[0])}</span>`;
+    const pm = x.months > 1 ? T("perMonth", money(x.sum / x.months)) : x.n ? T("per", money(x.sum / x.n) + " " + cur) : "";
+    const feats = x.n ? [T("fPack1"), T("fPack2")] : [T("fSub1"), T("fSub2", money(me?.seatSum || 149000))];
+    return `<button class="tc${tsel[tkind] === x.id ? " on" : ""}" data-pick="${x.id}"><div class="hd"><b>${tl.tn[x.id]}</b>${badge}<span class="rad"></span></div>
+      <div class="pr"><strong>${money(x.sum)}</strong><span>${cur} · ${x.n ? T("forN", x.n) : tl.tm[x.id]}</span></div>${pm ? `<div class="pm">${pm}</div>` : ""}
+      <ul>${feats.map((f) => `<li>${f}</li>`).join("")}</ul></button>`;
+  };
+  const sel = all.find((x) => x.id === tsel[tkind]);
+  $("#app").innerHTML = `<div class="thero"><h2>${T("tarT")}</h2><p>${T("tarP")}</p><svg viewBox="0 0 200 200"><use href="#S"/></svg></div>` +
+    (packs.length ? `<div class="tseg"><button data-kind="sub" class="${tkind === "sub" ? "on" : ""}">♾ ${T("subs")}</button>` +
+      `<button data-kind="pack" class="${tkind === "pack" ? "on" : ""}">📦 ${T("pack")}</button></div>` : "") +
+    list.map(card).join("") +
+    `<h3 style="margin-top:18px">${T("howPay")}</h3><div class="card"><ol class="steps" style="margin:0">${["pay1", "pay2", "pay3"].map((k) => `<li>${T(k)}</li>`).join("")}</ol></div>` +
+    (me?.contact ? `<button class="tnote" data-go="contact">💬<span>${T("askQ")}</span><i>›</i></button>` : "") +
+    `<div style="height:92px"></div>` +
+    (sel ? `<div class="cta"><button class="btn" id="ctaGo" data-go="plan:${sel.id}">${T("choose")} · ${money(sel.sum)} ${cur}</button></div>` : "");
+}
+function renderDone() {
+  const tl = L[lang] || L.uz, x = done;
+  $("#app").innerHTML = `<div class="done"><div class="ok"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h2>${T("doneT")}</h2><p>${T("doneP")}</p></div>
+    <div class="card"><div class="sum"><span>${T("tarifL")}</span><b>${tl.tn[x.id]} · ${x.n ? T("forN", x.n) : tl.tm[x.id]}</b></div>
+      <div class="sum" style="margin-top:8px"><span>${T("sumL")}</span><b>${money(x.sum)} ${T("sum")}</b></div></div>
+    <button class="btn" data-go="close">${T("toChat")}</button>`;
+}
+async function orderPlan(id) {
+  const btn = $("#ctaGo");
+  if (btn?.disabled) return;
+  if (btn) btn.disabled = true;
+  try {
+    const r = await api("order", { plan: id });
+    if (!r?.ok) { if (btn) btn.disabled = false; return toast(T("err")); }
+    done = (me?.tariffs?.length ? me.tariffs : TARIFFS0).find((x) => x.id === id);
+    window.go("done");
+    try { TG?.HapticFeedback?.notificationOccurred("success"); } catch {}
+  } catch { if (btn) btn.disabled = false; toast(T("err")); }
+}
+// Переход между экранами окна: кабинет, тарифы, «заявка отправлена». «Назад» Telegram ведёт в кабинет.
+window.go = function (v) { view = v; window.scrollTo(0, 0); paint(); }
+
+// ---------- продавец ----------
+const ago = (ms) => {
+  if (!ms) return "не заходил";
+  const m = Math.round((Date.now() - ms) / 60e3);
+  return m < 5 ? "в сети" : m < 60 ? m + " мин назад" : m < 1440 ? Math.round(m / 60) + " ч назад" : Math.round(m / 1440) + " дн. назад";
+};
+const money = (n) => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+function keyState(k) {
+  if (k.blocked) return "bad";
+  if (k.days === null || k.days < 0) return "off";
+  return k.days <= 3 ? "warn" : "";
+}
+function renderAdmin() {
+  const a = adm, live = a.keys.filter((k) => !k.blocked && k.days !== null && k.days >= 0);
+  const paid = live.filter((k) => !k.trial), active = live.filter((k) => k.seen && Date.now() - k.seen < 7 * 864e5);
+  const list = a.keys.filter((k) => {
+    if (q && !(k.name + " " + k.key).toLowerCase().includes(q.toLowerCase())) return false;
+    if (filter === "soon") return !k.blocked && !k.trial && k.days !== null && k.days >= 0 && k.days <= 7;
+    if (filter === "trial") return k.trial && k.days !== null && k.days >= 0;
+    if (filter === "blocked") return k.blocked;
+    if (filter === "ended") return k.days !== null && k.days < 0;
+    return filter === "paid" ? !k.trial && !k.blocked && k.days !== null && k.days >= 0 : true;
+  }).sort((x, y) => (x.days ?? 1e9) - (y.days ?? 1e9));
+  const f = [["paid", "Платные"], ["soon", "Кончаются"], ["trial", "Пробные"], ["ended", "Истекли"], ["blocked", "Блок"], ["all", "Все"]];
+  $("#app").innerHTML = `<div class="kpis"><div class="kpi"><b>${paid.length}</b><span>платных ключей</span></div>
+      <div class="kpi"><b>${active.length}</b><span>заходили за 7 дн.</span></div><div class="kpi"><b>${a.week[1]}</b><span>виз за неделю</span></div></div>
+    <div class="card" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center"><div><span style="color:var(--muted);font-size:12px">Оплаты за месяц</span>
+      <b style="display:block;font-size:22px">${money(a.month)}</b></div><button class="btn ghost" style="width:auto;padding:10px 14px" data-go="pays">История</button></div>
+    <input class="search" id="q" placeholder="🔍 Имя или ключ" value="${esc(q)}">
+    <div class="chips">${f.map(([v, n]) => `<button data-f="${v}" class="${filter === v ? "on" : ""}">${n}</button>`).join("")}</div>
+    ${list.map((k) => `<button class="krow" data-k="${k.row}"><span class="dot ${keyState(k)}"></span><div class="m"><b>${esc(k.name || "Без имени")}</b>
+      <small>${k.trial ? "🎁 пробный · " : ""}💻 ${k.pcs}/${k.seats} · ${ago(k.seen)}</small></div>
+      <div class="d"><b>${k.days === null ? "—" : k.days > 3650 ? "∞" : k.days < 0 ? "истёк" : k.days}</b>${k.days !== null && k.days >= 0 && k.days <= 3650 ? "дн." : ""}</div></button>`).join("") || `<div class="foot">Ничего не найдено</div>`}
+    <div style="height:70px"></div><button class="fab" data-go="new" aria-label="Новый ключ">＋</button>`;
+  $("#q").oninput = (e) => { q = e.target.value; const pos = e.target.selectionStart; renderAdmin(); const i = $("#q"); i.focus(); i.setSelectionRange(pos, pos); };
+}
+function sheet(html) { $("#sheetIn").innerHTML = html; $("#sheet").hidden = false; }
+$("#sheet").onclick = (e) => { if (e.target.id === "sheet") $("#sheet").hidden = true; };
+function keySheet(k) {
+  sheet(`<h4>${esc(k.name || "Без имени")}</h4><div class="sub">${k.trial ? "Пробный · " : ""}${k.until ? "до " + k.until : "без срока"} · 💻 ${k.pcs}/${k.seats} · ${ago(k.seen)}</div>
+    <button class="keychip" data-copy="${esc(k.key)}" style="margin:0 0 6px">🔑 ${esc(k.key)}</button>
+    <label class="f">Продлить</label><div class="opts" id="pm">${[0, 1, 3, 6, 12].map((n) => `<button data-v="${n}" class="${n === 1 ? "on" : ""}">${n ? n + " мес" : "не продлевать"}</button>`).join("")}</div>
+    <label class="f">Пакет анкет</label><div class="opts" id="pp">${[0, 50, 100, 300].map((n) => `<button data-v="${n}" class="${n ? "" : "on"}">${n ? "+" + n : "нет"}</button>`).join("")}</div>
+    <label class="f">Сумма оплаты</label><input class="i" id="psum" inputmode="numeric" placeholder="например 300000">
+    <div style="height:12px"></div><button class="btn" id="payGo">💰 Записать оплату</button>
+    <div style="height:8px"></div><button class="btn ghost" id="blk">${k.blocked ? "✅ Разблокировать" : "⛔ Заблокировать"}</button>
+    ${k.tg ? `<div style="height:8px"></div><button class="btn ghost" data-go="tg:${esc(k.tg)}">✉️ Написать клиенту</button>` : ""}`);
+  let months = 1, pieces = 0;
+  document.querySelectorAll("#pm button").forEach((b) => (b.onclick = () => { months = +b.dataset.v; document.querySelectorAll("#pm button").forEach((x) => x.classList.toggle("on", x === b)); haptic(); }));
+  document.querySelectorAll("#pp button").forEach((b) => (b.onclick = () => { pieces = +b.dataset.v; document.querySelectorAll("#pp button").forEach((x) => x.classList.toggle("on", x === b)); haptic(); }));
+  $("#payGo").onclick = async () => {
+    const sum = +String($("#psum").value).replace(/\D/g, "");
+    if (!sum && !months && !pieces) return toast("Укажите сумму, срок или пакет");
+    await adminDo("pay", { row: k.row, months, sum, pieces }, pieces ? "Анкеты добавлены ✓" : months ? "Продлено ✓" : "Оплата записана ✓");
+  };
+  $("#blk").onclick = () => adminDo("block", { row: k.row, on: k.blocked ? "0" : "1" }, k.blocked ? "Разблокирован ✓" : "Заблокирован ✓");
+}
+function newSheet() {
+  sheet(`<h4>Новый ключ</h4><div class="sub">Ключ сразу запишется в таблицу</div>
+    <label class="f">Имя клиента</label><input class="i" id="nn" placeholder="Например: Zafar aka">
+    <label class="f">Срок</label><div class="opts" id="nt">${[["7", "d", "7 дней"], ["1", "m", "1 мес"], ["3", "m", "3 мес"], ["6", "m", "6 мес"], ["12", "m", "12 мес"]]
+      .map(([n, u, s], i) => `<button data-n="${n}" data-u="${u}" class="${i === 1 ? "on" : ""}">${s}</button>`).join("")}</div>
+    <div class="row2" style="margin-top:8px"><input class="i" id="nown" inputmode="numeric" placeholder="свой срок">
+      <select class="i" id="nunit"><option value="d">дней</option><option value="m">месяцев</option></select></div>
+    <label class="f">Компьютеров</label><div class="opts" id="ns">${[1, 2, 3, 5].map((n) => `<button data-v="${n}" class="${n === 1 ? "on" : ""}">${n}</button>`).join("")}</div>
+    <label class="f">Сумма оплаты (необязательно)</label><input class="i" id="nsum" inputmode="numeric" placeholder="например 300000">
+    <div style="height:14px"></div><button class="btn" id="nGo">➕ Создать ключ</button>`);
+  let n = "1", u = "m", seats = 1;
+  const pick = (box, fn) => document.querySelectorAll(box + " button").forEach((b) => (b.onclick = () => { document.querySelectorAll(box + " button").forEach((x) => x.classList.toggle("on", x === b)); fn(b); haptic(); }));
+  pick("#nt", (b) => { n = b.dataset.n; u = b.dataset.u; $("#nown").value = ""; });
+  pick("#ns", (b) => (seats = +b.dataset.v));
+  $("#nown").oninput = () => document.querySelectorAll("#nt button").forEach((x) => x.classList.remove("on"));
+  $("#nGo").onclick = async () => {
+    const name = $("#nn").value.trim(), own = +$("#nown").value;
+    if (!name) return toast("Напишите имя клиента");
+    const r = await adminDo("newkey", { name, n: own || n, unit: own ? $("#nunit").value : u, seats, sum: +String($("#nsum").value).replace(/\D/g, "") }, null);
+    if (r?.key) sheet(`<div class="made"><div style="font-size:42px">🎉</div><h4>Ключ готов</h4><div class="sub">${esc(name)} · до ${esc(r.until)} · 💻 ${seats}</div>
+      <code>${esc(r.key)}</code><div class="row2"><button class="btn" data-copy="${esc(r.key)}">📋 Скопировать</button>
+      <button class="btn ghost" data-go="sharekey:${esc(r.key)}">📤 Отправить</button></div></div>`);
+  };
+}
+function paysSheet() {
+  sheet(`<h4>Оплаты</h4><div class="sub">Последние 30</div><div class="pays">${adm.pays.map((p) => `<div><span>${esc(p.name)}<br><small>${esc(p.at)}${p.months ? " · " + p.months + " мес" : ""}</small></span><b>${money(p.sum)}</b></div>`).join("") || "<div><span>Пока нет</span></div>"}</div>`);
+}
+async function adminDo(op, data, ok) {
+  try {
+    TG?.MainButton?.showProgress?.();
+    const r = await api(op, data);
+    if (!r.ok) { toast(r.reason === "form" ? "Проверьте поля" : T("err")); return null; }
+    if (r.keys) adm = r;
+    if (ok) { toast(ok); $("#sheet").hidden = true; }
+    try { TG?.HapticFeedback?.notificationOccurred("success"); } catch {}
+    if (op !== "newkey") renderAdmin(); else adm = await api("keys");
+    return r;
+  } catch { toast(T("err")); return null; } finally { TG?.MainButton?.hideProgress?.(); }
+}
+
+// ---------- нажатия ----------
+document.addEventListener("click", async (e) => {
+  const c = e.target.closest("[data-copy]");
+  if (c) return copy(c.dataset.copy);
+  const f = e.target.closest("[data-f]");
+  if (f) { filter = f.dataset.f; haptic(); return renderAdmin(); }
+  const k = e.target.closest("[data-k]");
+  if (k) { haptic(); return keySheet(adm.keys.find((x) => String(x.row) === k.dataset.k)); }
+  const pk = e.target.closest("[data-pick]");
+  if (pk) { tsel[tkind] = pk.dataset.pick; haptic(); return renderTariffs(); }
+  const kd = e.target.closest("[data-kind]");
+  if (kd) { tkind = kd.dataset.kind; haptic(); return renderTariffs(); }
+  const g = e.target.closest("[data-go]");
+  if (!g) return;
+  haptic();
+  const go = g.dataset.go;
+  if (go === "store") return openLink(me.store);
+  if (go === "contact") return openLink(me.contact);
+  if (go === "tariffs") return window.go("tariffs");
+  if (go === "close") return TG?.close ? TG.close() : window.go("me");
+  if (go.startsWith("plan:")) return orderPlan(go.slice(5));
+  if (go === "channel") return openLink(me.channel);
+  if (go === "ref") return openLink("https://t.me/share/url?url=" + encodeURIComponent(me.ref || "https://t.me/" + me.bot) + "&text=" + encodeURIComponent(T("share")));
+  if (go.startsWith("v:")) { const r = await api("video", { kind: go.slice(2) }).catch(() => null); toast(r?.ok ? T("sent") : T("err")); return; }
+  if (go === "new") return newSheet();
+  if (go === "pays") return paysSheet();
+  if (go.startsWith("tg:")) return openLink("tg://user?id=" + go.slice(3));
+  if (go.startsWith("sharekey:")) return openLink("https://t.me/share/url?url=" + encodeURIComponent(go.slice(9)) + "&text=" + encodeURIComponent("Vizachi kaliti:"));
+});
+document.querySelectorAll("#langs button").forEach((b) => (b.onclick = async () => {
+  lang = b.dataset.l; paint(); haptic();
+  api("lang", { lang }).catch(() => {});
+}));
+document.querySelectorAll("#seg button").forEach((b) => (b.onclick = async () => {
+  view = b.dataset.v; haptic();
+  document.querySelectorAll("#seg button").forEach((x) => x.classList.toggle("on", x === b));
+  if (view === "admin" && !adm) { $("#app").innerHTML = `<div class="sk" style="height:300px"></div>`; adm = await api("keys"); }
+  paint();
+}));
+function paint() {
+  $("#sub").textContent = T("sub");
+  $("#segMe").textContent = T("me");
+  document.querySelectorAll("#langs button").forEach((b) => b.classList.toggle("on", b.dataset.l === lang));
+  const inner = view === "tariffs" || view === "done";
+  $("#seg").hidden = !me?.admin || inner;
+  try { inner ? TG?.BackButton?.show() : TG?.BackButton?.hide(); } catch {}
+  if (view === "admin" && adm?.ok) return renderAdmin();
+  if (!me) return;
+  if (view === "tariffs") return renderTariffs();
+  if (view === "done" && done) return renderDone();
+  renderMe();
+}
+try { TG?.BackButton?.onClick(() => { haptic(); window.go("me"); }); } catch {}
+
+(async function start() {
+  if (TG) { TG.ready(); TG.expand(); try { TG.setHeaderColor("secondary_bg_color"); } catch {} }
+  const demo = /[?&]demo=1/.test(location.search);
+  // Из бота кнопкой «Tariflar» окно открывается сразу на тарифах.
+  if (new URLSearchParams(location.search).get("s") === "tariffs" || TG?.initDataUnsafe?.start_param === "tariffs") view = "tariffs";
+  if (!TG?.initData && !demo) { $("#app").innerHTML = `<div class="card" style="text-align:center">${T("open", "vizachi_robot")}</div>`; return paint(); }
+  try {
+    me = demo ? window.DEMO_ME : await api("me");
+    if (!me?.ok) throw new Error(me?.reason);
+    lang = me.lang || "uz";
+    if (demo && window.DEMO_ADM) { adm = window.DEMO_ADM; api = async () => adm; }
+    paint();
+  } catch { $("#app").innerHTML = `<div class="card" style="text-align:center">${T("err")}</div>`; }
+})();
+</script>
+</body>
+</html>
