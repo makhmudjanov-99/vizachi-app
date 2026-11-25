@@ -167,6 +167,19 @@
   .done p { margin: 0 auto 18px; color: var(--muted); font-size: 14px; max-width: 320px; }
   .sum { display: flex; justify-content: space-between; align-items: center; }
   .sum span { color: var(--muted); font-size: 13px; }
+  /* оплата на карту */
+  .bank { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 12px; color: #fff; background: linear-gradient(135deg, #1e293b, #0f766e); }
+  .bank small { opacity: .75; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+  .bank b { display: block; margin: 14px 0 12px; font: 700 22px/1.2 ui-monospace, Consolas, monospace; letter-spacing: 1px; }
+  .bank .hn { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bank .hn span { font-weight: 600; text-transform: uppercase; letter-spacing: .5px; font-size: 13.5px; }
+  .bank button { padding: 8px 12px; border-radius: 11px; background: rgba(255, 255, 255, .16); color: #fff; font-weight: 700; font-size: 13px; }
+  .bank svg { position: absolute; right: -22px; top: -26px; width: 112px; height: 112px; color: #fff; opacity: .12; }
+  .rcp { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 92px; border: 2px dashed var(--line); border-radius: 18px;
+    color: var(--accent); font-weight: 700; cursor: pointer; padding: 12px; background: var(--card); }
+  .rcp i { font-style: normal; font-size: 24px; }
+  .rcp.on { border-style: solid; border-color: var(--accent); justify-content: flex-start; }
+  .rcp img { width: 62px; height: 82px; object-fit: cover; border-radius: 10px; }
   @keyframes pop { from { transform: scale(.4); opacity: 0; } }
   .fab { position: fixed; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 18px; background: var(--accent);
     color: #fff; font-size: 28px; box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -237,7 +250,25 @@ const L = {
         doneP: "Sotuvchi tez orada Telegram'da yozadi. Ariza nusxasi chatda.",
         toChat: "Chatga qaytish",
         tarifL: "Tarif",
-        sumL: "Summa" },
+        sumL: "Summa",
+        payCard: "To'lov kartasi",
+        copyBtn: "Nusxa",
+        pst1: "Bank ilovangizda shu kartaga {0} o'tkazing",
+        pst2: "To'lov chekining rasmini (skrinshot) yuklang",
+        pst3: "Tarif darhol yoqiladi, sotuvchi chekni keyin tekshiradi",
+        rcpPick: "Chek rasmini tanlang",
+        rcpChange: "Boshqa rasm tanlash",
+        rcpBad: "Rasmni ochib bo'lmadi",
+        paidBtn: "To'ladim · Chekni yuborish",
+        doneT2: "Chek yuborildi",
+        doneP2: "Sotuvchi to'lovni tekshiradi. Tasdiqlangach obuna o'zi yangilanadi, xabar chatga keladi.",
+        doneT3: "Tarif yoqildi",
+        doneP3: "Vizachi o'zi yangilanadi. Sotuvchi chekni keyinroq tekshiradi.",
+        untilL: "Obuna",
+        untilV: "{0} gacha",
+        leftL: "Anketa qoldi",
+        pay2c: "Kartaga o'tkazing va chek rasmini yuklang",
+        pay3c: "Chekdan keyin tarif darhol yoqiladi" },
   ru: { sub: "помощник визового агента", me: "Кабинет", hi: "Ассалому алейкум", days: "дн.", left: "осталось", until: "до {0}",
         paid: "Подписка", trial: "Пробный период", ended: "Закончилась", blocked: "Заблокирован", last: "Последний день",
         renew: "Продлить", buy: "Тарифы", copy: "Скопировано", stats: "Статистика", today: "Сегодня", month: "Месяц", total: "Всего",
@@ -274,7 +305,25 @@ const L = {
         doneP: "Продавец скоро напишет в Telegram. Копия заявки в чате.",
         toChat: "Вернуться в чат",
         tarifL: "Тариф",
-        sumL: "Сумма" },
+        sumL: "Сумма",
+        payCard: "Карта для оплаты",
+        copyBtn: "Копировать",
+        pst1: "Переведите {0} на эту карту в приложении банка",
+        pst2: "Загрузите снимок чека об оплате",
+        pst3: "Тариф включится сразу, продавец проверит чек позже",
+        rcpPick: "Выберите снимок чека",
+        rcpChange: "Выбрать другой снимок",
+        rcpBad: "Не удалось открыть снимок",
+        paidBtn: "Я оплатил · Отправить чек",
+        doneT2: "Чек отправлен",
+        doneP2: "Продавец проверит оплату. После подтверждения подписка обновится сама, сообщение придёт в чат.",
+        doneT3: "Тариф подключён",
+        doneP3: "Vizachi обновится сам. Продавец проверит чек позже.",
+        untilL: "Подписка",
+        untilV: "до {0}",
+        leftL: "Анкет осталось",
+        pay2c: "Переведите на карту и загрузите снимок чека",
+        pay3c: "После чека тариф включится сразу" },
   en: { sub: "visa agent's assistant", me: "Account", hi: "Hello", days: "days", left: "left", until: "until {0}",
         paid: "Subscription", trial: "Trial", ended: "Ended", blocked: "Blocked", last: "Last day",
         renew: "Renew", buy: "Plans", copy: "Copied", stats: "Statistics", today: "Today", month: "Month", total: "Total",
@@ -311,7 +360,25 @@ const L = {
         doneP: "The seller will message you in Telegram soon. A copy is in the chat.",
         toChat: "Back to chat",
         tarifL: "Plan",
-        sumL: "Amount" },
+        sumL: "Amount",
+        payCard: "Card for payment",
+        copyBtn: "Copy",
+        pst1: "Transfer {0} to this card in your bank app",
+        pst2: "Upload a screenshot of the receipt",
+        pst3: "The plan turns on at once, the seller checks the receipt later",
+        rcpPick: "Choose the receipt screenshot",
+        rcpChange: "Choose another image",
+        rcpBad: "Couldn't open the image",
+        paidBtn: "I've paid · Send receipt",
+        doneT2: "Receipt sent",
+        doneP2: "The seller will check the payment. Once confirmed your subscription updates by itself and you get a message in the chat.",
+        doneT3: "Plan activated",
+        doneP3: "Vizachi updates by itself. The seller will check the receipt later.",
+        untilL: "Subscription",
+        untilV: "until {0}",
+        leftL: "Apps left",
+        pay2c: "Transfer to the card and upload the receipt",
+        pay3c: "After the receipt the plan turns on at once" },
 };
 let lang = "uz", me = null, adm = null, view = "me", filter = "all", q = "";
 const T = (k, ...a) => a.reduce((s, x, i) => s.split("{" + i + "}").join(x), (L[lang] || L.uz)[k] || k);
@@ -401,20 +468,70 @@ function renderTariffs() {
     (packs.length ? `<div class="tseg"><button data-kind="sub" class="${tkind === "sub" ? "on" : ""}">♾ ${T("subs")}</button>` +
       `<button data-kind="pack" class="${tkind === "pack" ? "on" : ""}">📦 ${T("pack")}</button></div>` : "") +
     list.map(card).join("") +
-    `<h3 style="margin-top:18px">${T("howPay")}</h3><div class="card"><ol class="steps" style="margin:0">${["pay1", "pay2", "pay3"].map((k) => `<li>${T(k)}</li>`).join("")}</ol></div>` +
+    `<h3 style="margin-top:18px">${T("howPay")}</h3><div class="card"><ol class="steps" style="margin:0">${(me?.pay ? ["pay1", "pay2c", "pay3c"] : ["pay1", "pay2", "pay3"]).map((k) => `<li>${T(k)}</li>`).join("")}</ol></div>` +
     (me?.contact ? `<button class="tnote" data-go="contact">💬<span>${T("askQ")}</span><i>›</i></button>` : "") +
     `<div style="height:92px"></div>` +
     (sel ? `<div class="cta"><button class="btn" id="ctaGo" data-go="plan:${sel.id}">${T("choose")} · ${money(sel.sum)} ${cur}</button></div>` : "");
 }
 function renderDone() {
-  const tl = L[lang] || L.uz, x = done;
+  const tl = L[lang] || L.uz, x = done, info = doneInfo;
+  const title = info?.auto ? T("doneT3") : info ? T("doneT2") : T("doneT"), sub = info?.auto ? T("doneP3") : info ? T("doneP2") : T("doneP");
+  const rows = [[T("tarifL"), `${tl.tn[x.id]} · ${x.n ? T("forN", x.n) : tl.tm[x.id]}`], [T("sumL"), `${money(x.sum)} ${T("sum")}`]];
+  if (info?.auto && info.until) rows.push([T("untilL"), T("untilV", esc(info.until))]);
+  if (info?.auto && info.left != null) rows.push([T("leftL"), String(info.left)]);
   $("#app").innerHTML = `<div class="done"><div class="ok"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-    <h2>${T("doneT")}</h2><p>${T("doneP")}</p></div>
-    <div class="card"><div class="sum"><span>${T("tarifL")}</span><b>${tl.tn[x.id]} · ${x.n ? T("forN", x.n) : tl.tm[x.id]}</b></div>
-      <div class="sum" style="margin-top:8px"><span>${T("sumL")}</span><b>${money(x.sum)} ${T("sum")}</b></div></div>
+    <h2>${title}</h2><p>${sub}</p></div>
+    <div class="card">${rows.map(([k, v], i) => `<div class="sum"${i ? ' style="margin-top:8px"' : ""}><span>${k}</span><b>${v}</b></div>`).join("")}</div>
     <button class="btn" data-go="close">${T("toChat")}</button>`;
 }
+// ---------- оплата на карту ----------
+let payPlan = null, rcp = null, doneInfo = null;
+const cardFmt = (d) => String(d || "").replace(/(\d{4})(?=\d)/g, "$1 ");
+function renderPay() {
+  const tl = L[lang] || L.uz, cur = T("sum"), x = (me?.tariffs?.length ? me.tariffs : TARIFFS0).find((y) => y.id === payPlan);
+  if (!x || !me?.pay) return window.go("tariffs");
+  $("#app").innerHTML = `<div class="thero"><p style="margin-bottom:2px">${tl.tn[x.id]} · ${x.n ? T("forN", x.n) : tl.tm[x.id]}</p>
+      <h2 style="font-size:30px;margin:0">${money(x.sum)} ${cur}</h2><svg viewBox="0 0 200 200"><use href="#S"/></svg></div>
+    <div class="bank"><small>${T("payCard")}</small><b>${esc(cardFmt(me.pay.card))}</b>
+      <div class="hn"><span>${esc(me.pay.name)}</span><button data-copy="${esc(me.pay.card)}">📋 ${T("copyBtn")}</button></div><svg viewBox="0 0 200 200"><use href="#S"/></svg></div>
+    <div class="card"><ol class="steps" style="margin:0"><li>${T("pst1", money(x.sum) + " " + cur)}</li><li>${T("pst2")}</li><li>${T("pst3")}</li></ol></div>
+    <label class="rcp${rcp ? " on" : ""}" for="rcpIn">${rcp ? `<img src="data:image/jpeg;base64,${rcp}" alt=""><span>${T("rcpChange")}</span>` : `<i>📎</i><span>${T("rcpPick")}</span>`}</label>
+    <input type="file" id="rcpIn" accept="image/*" hidden>
+    <div style="height:92px"></div>
+    <div class="cta"><button class="btn" id="ctaGo" data-go="paid"${rcp ? "" : " disabled"}>${T("paidBtn")}</button></div>`;
+  $("#rcpIn").onchange = (e) => pickReceipt(e.target.files[0]);
+}
+// Чек сжимаем до 1400 px (JPEG) — быстро уходит даже по мобильному интернету.
+async function pickReceipt(f) {
+  if (!f) return;
+  try {
+    const url = URL.createObjectURL(f), img = new Image();
+    await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
+    const k = Math.min(1, 1400 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    rcp = c.toDataURL("image/jpeg", 0.8).split(",")[1];
+    haptic(); renderPay();
+  } catch { toast(T("rcpBad")); }
+}
+async function sendPaid() {
+  const btn = $("#ctaGo");
+  if (!rcp || !btn || btn.disabled) return;
+  btn.disabled = true; btn.textContent = "…";
+  try {
+    const r = await api("order", { plan: payPlan, receipt: rcp });
+    if (!r?.ok) throw new Error("order");
+    done = (me?.tariffs?.length ? me.tariffs : TARIFFS0).find((x) => x.id === payPlan); doneInfo = r; rcp = null;
+    window.go("done");
+    try { TG?.HapticFeedback?.notificationOccurred("success"); } catch {}
+    api("me").then((x) => { if (x?.ok && x.tariffs) me = x; }).catch(() => {});
+  } catch { btn.disabled = false; btn.textContent = T("paidBtn"); toast(T("err")); }
+}
 async function orderPlan(id) {
+  // Карта продавца есть — экран оплаты с чеком; нет — заявка, продавец свяжется.
+  if (me?.pay?.card) { payPlan = id; rcp = null; return window.go("pay"); }
+  doneInfo = null;
   const btn = $("#ctaGo");
   if (btn?.disabled) return;
   if (btn) btn.disabled = true;
@@ -547,6 +664,7 @@ document.addEventListener("click", async (e) => {
   if (go === "tariffs") return window.go("tariffs");
   if (go === "close") return TG?.close ? TG.close() : window.go("me");
   if (go.startsWith("plan:")) return orderPlan(go.slice(5));
+  if (go === "paid") return sendPaid();
   if (go === "channel") return openLink(me.channel);
   if (go === "ref") return openLink("https://t.me/share/url?url=" + encodeURIComponent(me.ref || "https://t.me/" + me.bot) + "&text=" + encodeURIComponent(T("share")));
   if (go.startsWith("v:")) { const r = await api("video", { kind: go.slice(2) }).catch(() => null); toast(r?.ok ? T("sent") : T("err")); return; }
@@ -569,16 +687,17 @@ function paint() {
   $("#sub").textContent = T("sub");
   $("#segMe").textContent = T("me");
   document.querySelectorAll("#langs button").forEach((b) => b.classList.toggle("on", b.dataset.l === lang));
-  const inner = view === "tariffs" || view === "done";
+  const inner = view === "tariffs" || view === "pay" || view === "done";
   $("#seg").hidden = !me?.admin || inner;
   try { inner ? TG?.BackButton?.show() : TG?.BackButton?.hide(); } catch {}
   if (view === "admin" && adm?.ok) return renderAdmin();
   if (!me) return;
   if (view === "tariffs") return renderTariffs();
+  if (view === "pay") return renderPay();
   if (view === "done" && done) return renderDone();
   renderMe();
 }
-try { TG?.BackButton?.onClick(() => { haptic(); window.go("me"); }); } catch {}
+try { TG?.BackButton?.onClick(() => { haptic(); window.go(view === "pay" ? "tariffs" : "me"); }); } catch {}
 
 (async function start() {
   if (TG) { TG.ready(); TG.expand(); try { TG.setHeaderColor("secondary_bg_color"); } catch {} }
